@@ -33,29 +33,39 @@ Though these directions are for [CentOS(6.5)](www.centos.org); if you're not
 on this flavor of GNU/Linux, you may need to make a few minor tweaks to the 
 commands for them to suit your distribution.
 
+---
+
 Install git
 -----------
 `sudo yum install git`
 
+---
+
 The git user
 -------------------
-Create the user
+Create the user  
 `sudo adduser git`
 
-Switch to the user.
+Switch to the user  
 `sudo su git`
-Secure the git user's home folder from outside access
+
+Secure the git user's home folder from outside access  
 `chmod g-w,o-w ~`
-Create the ssh directory skeleton, and set permissions.
-`cd ~ && mkdir .ssh`
-`chmod 700 ~/.ssh`
+
+Create the ssh directory skeleton, and set permissions.  
+ `cd ~ && mkdir .ssh`
+ `chmod 700 ~/.ssh`
+
 Create the file where __ALL__ the developer's SSH keys will placed, and set 
-it's permissions.
-`touch ~/.ssh/authorized_keys`
-`chmod 600 ~/.ssh/authorized_keys`
+it's permissions.  
+ `touch ~/.ssh/authorized_keys`
+ `chmod 600 ~/.ssh/authorized_keys`
+
 Add in the the developer(s) public SSH keys, as they will be pushing code to 
-the git user who holds the git repository.
-`echo /PATH/TO/YOUR/.ssh/id_rsa.pub >> /home/git/.ssh/authorized_keys"`
+the git user who holds the git repository.  
+ `echo /PATH/TO/YOUR/.ssh/id_rsa.pub >> /home/git/.ssh/authorized_keys"`
+
+---
 
 The git repository
 ------------------
@@ -64,63 +74,75 @@ we will just be setting up the repository in the git user's home directory.
 Assuming you are still logged in as the git user, and that this is a NEW 
 repository we are setting up:
 
-Make the git repo
+Make the git repo  
 `mkdir ~/REPONAME.git`
 `cd REPONAME.git`
 `git --bare init`
 
 
->At this point, our git repository is initialized and ready for use.  All 
+At this point, our git repository is initialized and ready for use.  All 
 that is needed is for us to setup the final events to occurr after receiving 
 a new piece of code!
+
+---
 
 The post-receive hook
 ---------------------
 Assuming you are STILL logged in as the git user:
 
-Move to the __hooks__ folder in the repo and create a new __post-receive__ hook
-`cd ~/REPONAME.git/hooks`
-`echo\
-"#!/bin/bash
-git --work-tree=/PATH/TO/FINAL/DATA/LOCATION --git-dir=~/REPONAME.git checkout -f
+Move to the __hooks__ folder in the repo  
+`cd ~/REPONAME.git/hooks`  
+
+Create a new __post-receive__ hook  
+```
+echo "#!/bin/bash git --work-tree=/PATH/TO/FINAL/DATA/LOCATION
+--git-dir=~/REPONAME.git checkout -f
 " > post-receive
-And make it executable
+```
+
+And make it executable  
 `chmod +x post-receive`
 
-- Basically, "PATH/TO/FINAL/DATA..." would be the location you ultimately want 
+Basically, "PATH/TO/FINAL/DATA..." would be the location you ultimately want 
 your data to be stored (be it /srv/, /var/www, etc.), so that your web-server 
 programs (apache/nginx/etc...) have a set location they know where to find 
 your code!  So in this script, we are _receiving post data_ and then moving it 
 into the correct _working directory_.
+
+---
 
 Test it!
 --------
 At this point, assuming all firewall/etc. nuisances have been taken care of, 
 you should now have a working git server!
 
-Test it out by cloning it!
+Test it out by cloning it!  
 `git clone git@YOURSERVERNAME:~/YOURREPONAME.git`
 
-> For me, to verify it was holding my code, I made a commit, deleted my local 
+For me, to verify it was holding my code, I made a commit, deleted my local 
 repo, then re-cloned the repo to see if the commit persisted.
 
 **We are now LOCKING DOWN the git user by making the account INACCESSIBLE BY 
 SHELL: that way we emphasize that this account is for handling data, and is 
 NOT meant to be used regularly (can't be SSH'd into).**
 
+---
+
 Locking down the git user via git-shell
 ---------------------------------------
-Under your normal user-account on the server (anyone BUT git):
+Under your normal user-account on the server (anyone BUT git):  
 `sudo vim /etc/passwd`
 
-Under here we will look for the line that is similar to:
+Under here we will look for the line that is similar to:  
 `git:x:1234:1234::/home/git:/bin/bash`
-And change it to:
+
+And change it to:  
 `git:x:1234:1234::/home/git:/git-shell`
 
 This switches the git user's default shell to a more locked down version 
 implemented specifically by git for the purpose of being a "true" git user.
 
+---
 
 Now, sit back and enjoy the fact that you now have your own git repository, 
 automatically munching code and moving it around to your whim.
